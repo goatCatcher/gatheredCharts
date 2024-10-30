@@ -1,4 +1,8 @@
 import re
+# Preferred scale
+chromatic_scale = ['C', 'C#', 'D', 'Eb', 'E', 'F', 'F#', 'G', 'G#', 'A', 'Bb', 'B']
+# Notes to convert
+enharmonic_map = {'Db': 'C#', 'D#': 'Eb', 'Gb': 'F#', 'Ab': 'G#', 'A#': 'Bb'}
 
 # Function to convert chord number to chord name based on the key
 def number_to_chord(key, number):
@@ -19,43 +23,51 @@ def number_to_chord(key, number):
     
     return chord_name
 
-# Function to transpose chord by a given number of steps
-def transpose_chord(chord, steps):
-    # Updated chord list to include flats as well as sharps
-    chord_list = [
-        'C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B',
-        'Db', 'Eb', 'Gb', 'Ab', 'Bb'
-    ]
-    
-    # Map of enharmonic equivalents to handle flats and sharps interchangeably
-    enharmonic_map = {
-        'Db': 'C#', 'Eb': 'D#', 'Gb': 'F#', 'Ab': 'G#', 'Bb': 'A#',
-        'C#': 'Db', 'D#': 'Eb', 'F#': 'Gb', 'G#': 'Ab', 'A#': 'Bb'
-    }
-    
-    # Matching the root note and any suffix (e.g., minor, 7th)
+def get_normalised_chord(chord):
     match = re.match(r"([A-G][#b]?)(.*)", chord)
     if match:
         root, suffix = match.groups()
-        
-        # Handle enharmonic equivalence to ensure uniformity
         if root in enharmonic_map:
             root = enharmonic_map[root]
+        return root, suffix
 
-        # Find the transposed index
-        index = (chord_list.index(root) + steps) % 12
-        
-        # Return the transposed chord with the suffix
-        return chord_list[index] + suffix
+# Function to transpose chord by a given number of steps
+def transpose_chord(chord, steps=0):
     
-    return chord
+    root, suffix = get_normalised_chord(chord)
+    
+    # Find the transposed index
+    index = (chromatic_scale.index(root) + steps) % 12
+    
+    # Return the transposed chord with the suffix
+    return chromatic_scale[index] + suffix
 
-# Function to convert a key to the number of steps for transposition
 def key_to_steps(original_key, target_key):
-    chromatic_scale = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B']
-    original_index = chromatic_scale.index(original_key)
-    target_index = chromatic_scale.index(target_key)
-    return (target_index - original_index) % 12
+    
+    # Get root note and suffix (e.g., minor) for original and target keys
+    original_root, original_suffix = get_normalised_chord(original_key)
+    target_root, target_suffix = get_normalised_chord(target_key)
+
+    # Get the normalized index in the chromatic scale for both keys
+    original_index = chromatic_scale.index(original_root)
+    target_index = chromatic_scale.index(target_root)
+
+    # Calculate steps required to transpose
+    steps = (target_index - original_index) % 12
+
+    # adjust the suffix accordingly to reflect relative major/minor movement
+    if original_suffix == 'm' and target_suffix == '':
+        steps = (steps - 3) % 12
+    elif original_suffix == '' and target_suffix == 'm':
+        steps = (steps + 3) % 12
+    return steps
+
+# Test cases
+print(key_to_steps('Am', 'Bb'))  # Expected: correct relative step count
+print(key_to_steps('C', 'Am'))   # Expected: 9 steps down (relative major to minor)
+print(key_to_steps('G#', 'F#m')) # Expected: 1 step (enharmonic equivalent)
+print(key_to_steps('Db', 'F#'))  # Expected: 5 steps
+
 
 # Updated parse function to use both steps and key
 def parse_chordpro_to_lyrics_with_chords(lines, transpose_steps=0, target_key=None, original_key=None):
