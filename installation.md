@@ -1,3 +1,6 @@
+
+## Installing the project
+
 To install this project, you need to have Python 3.6 or higher installed on your machine. You can download the latest version of Python from the official website. After installing Python, you can install the required dependencies using the following command:
 
 ```bash
