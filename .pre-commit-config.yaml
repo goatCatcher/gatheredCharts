@@ -1,0 +1,32 @@
+
+# See https://pre-commit.com for more information
+# See https://pre-commit.com/hooks.html for more hooks
+fail_fast: true
+
+repos:
+- repo: https://github.com/pre-commit/pre-commit-hooks
+  rev: v3.2.0
+  hooks:
+  - id: trailing-whitespace
+  - id: end-of-file-fixer
+  - id: check-yaml
+  - id: check-added-large-files
+
+- repo: https://github.com/astral-sh/ruff-pre-commit
+  # Ruff version.
+  rev: v0.7.2
+  hooks:
+    # Run the linter.
+    - id: ruff
+      args: [ --fix ]
+    # Run the formatter.
+    - id: ruff-format
+
+- repo: local
+  hooks:
+  - id: pylint
+    stages: [pre-commit, pre-push]
+    name: Linting with pylint
+    entry: sh -c 'poetry run pylint $(find src tests examples -name "*.py") --fail-on=F,E,C,R,W'
+    language: system
+    pass_filenames: false
