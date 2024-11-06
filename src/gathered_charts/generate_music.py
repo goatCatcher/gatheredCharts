@@ -1,10 +1,10 @@
 import re
-from typing import List
+from typing import Any, Dict, List, Tuple
 
 from gathered_charts.transpose import transpose_chord
 
 
-def handle_metadata(lines: List[str]):
+def handle_metadata(lines: List[str]) -> None:
     output_sections = []
     for line in lines:
         if line.startswith("{title:"):
@@ -30,7 +30,9 @@ def handle_metadata(lines: List[str]):
             continue
 
 
-def parse_chordpro_to_lyrics_with_chords(lines: List[str], transpose_steps: int = 0):
+def parse_chordpro_to_lyrics_with_chords(
+    lines: List[str], transpose_steps: int = 0
+) -> str:
     output_sections = []
 
     for line in lines:
@@ -39,7 +41,7 @@ def parse_chordpro_to_lyrics_with_chords(lines: List[str], transpose_steps: int 
         lyrics = re.sub(
             r"\[([^\]]+)\]", "", line
         ).strip()  # Remove the chords, leaving only lyrics
-        chords = []
+        chords: List[Tuple[str, int]] = []
 
         current_pos = 0
         for match in re.finditer(r"\[([^\]]+)\]", line):
@@ -91,7 +93,7 @@ def parse_chordpro_to_lyrics_with_chords(lines: List[str], transpose_steps: int 
     return "\n".join(output_sections)
 
 
-def generate_full_html(chordpro_lines, transpose_steps=0):
+def generate_full_html(chordpro_lines: List[str], transpose_steps: int = 0) -> str:
     # Generate song content in HTML format
     song_content_html = parse_chordpro_to_lyrics_with_chords(
         chordpro_lines, transpose_steps
@@ -149,7 +151,9 @@ def generate_full_html(chordpro_lines, transpose_steps=0):
     return html
 
 
-def generate_song_html(title, key, lead, sections):
+def generate_song_html(
+    title: str, key: str, lead: str, sections: List[Dict[str, Any]]
+) -> str:
     html = f"""
     <!DOCTYPE html>
     <html>

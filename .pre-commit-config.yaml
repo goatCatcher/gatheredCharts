@@ -30,3 +30,10 @@ repos:
     entry: sh -c 'poetry run pylint $(find src tests examples -name "*.py") --fail-on=F,E,C,R,W'
     language: system
     pass_filenames: false
+
+  - id: mypy
+    stages: [pre-commit, pre-push]
+    name: Type checking with mypy
+    entry: sh -c 'poetry run mypy $(find src tests examples -name "*.py")'
+    language: system
+    pass_filenames: false

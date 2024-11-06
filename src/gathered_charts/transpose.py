@@ -1,8 +1,9 @@
 import re
+from typing import List, Optional, Tuple
 
 
 # Function to convert chord number to chord name based on the key
-def number_to_chord(key, number):
+def number_to_chord(key: str, number: int) -> str:
     # Define major scale chords for each number in a major key
     major_scale_chords = {1: "", 2: "m", 3: "m", 4: "", 5: "", 6: "m", 7: "dim"}
 
@@ -20,7 +21,7 @@ def number_to_chord(key, number):
 
 
 # Function to transpose chord by a given number of steps
-def transpose_chord(chord, steps):
+def transpose_chord(chord: str, steps: int) -> str:
     # Updated chord list to include flats as well as sharps
     chord_list = [
         "C",
@@ -74,7 +75,7 @@ def transpose_chord(chord, steps):
 
 
 # Function to convert a key to the number of steps for transposition
-def key_to_steps(original_key, target_key):
+def key_to_steps(original_key: str, target_key: str) -> int:
     chromatic_scale = ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"]
     original_index = chromatic_scale.index(original_key)
     target_index = chromatic_scale.index(target_key)
@@ -83,8 +84,11 @@ def key_to_steps(original_key, target_key):
 
 # Updated parse function to use both steps and key
 def parse_chordpro_to_lyrics_with_chords(
-    lines, transpose_steps=0, target_key=None, original_key=None
-):
+    lines: List[str],
+    transpose_steps: int = 0,
+    target_key: Optional[str] = None,
+    original_key: Optional[str] = None,
+) -> str:
     # Determine the number of steps if keys are specified
     if target_key and original_key:
         transpose_steps = key_to_steps(original_key, target_key)
@@ -97,7 +101,7 @@ def parse_chordpro_to_lyrics_with_chords(
         lyrics = re.sub(
             r"\[([^\]]+)\]", "", line
         ).strip()  # Remove the chords, leaving only lyrics
-        chords = []
+        chords: List[Tuple[str, int]] = []
 
         current_pos = 0
         for match in re.finditer(r"\[([^\]]+)\]", line):
@@ -105,7 +109,9 @@ def parse_chordpro_to_lyrics_with_chords(
 
             # If chord is specified as a number, convert to chord name
             if chord.isdigit():
-                chord = number_to_chord(target_key or original_key, int(chord))
+                key: Optional[str] = target_key or original_key
+                assert key is not None, "Expected target or original key to be provided"
+                chord = number_to_chord(key, int(chord))
 
             # Transpose the chord if needed
             chord = transpose_chord(chord, transpose_steps)  # Transpose if needed
@@ -142,4 +148,4 @@ def parse_chordpro_to_lyrics_with_chords(
             print(lyrics_line)
             output_sections.append(f"<pre class='lyrics-line'>{lyrics_line}</pre>")
 
-    # return "\n".join(output_sections)
+    return "\n".join(output_sections)

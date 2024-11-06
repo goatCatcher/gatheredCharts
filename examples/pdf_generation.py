@@ -39,10 +39,12 @@ chords = []
 transpose_steps = 0
 current_pos = 0
 match = re.finditer(r"\[([A-G][#b]?[^\]]*)\]", line)
-for match in re.finditer(r"\[([A-G][#b]?[^\]]*)\]", line):
-    chord = match.group(1)
+for match_i in re.finditer(r"\[([A-G][#b]?[^\]]*)\]", line):
+    chord = match_i.group(1)
     chord = transpose_chord(chord, transpose_steps)  # Transpose if needed
-    chord_start = match.start() - current_pos  # Find the position to align with lyrics
+    chord_start = (
+        match_i.start() - current_pos
+    )  # Find the position to align with lyrics
     print(chord, chord_start)
     chords.append((chord, chord_start))
     print(chords)
@@ -64,11 +66,6 @@ song_content_html = parse_chordpro_to_lyrics_with_chords(
 # Generate full HTML
 html_output = generate_full_html(chordpro_lines, transpose_steps=2)
 
-# Save HTML output
-with open("song.html", "w", encoding="utf8") as file:
-    file.write(html_output)
-
-HTML("song.html").write_pdf("song.pdf")
 # Save HTML output
 with open("song.html", "w", encoding="utf8") as file:
     file.write(html_output)
