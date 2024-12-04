@@ -1,18 +1,13 @@
 import re
 # Preferred scale
 chromatic_scale = ['C', 'C#', 'D', 'Eb', 'E', 'F', 'F#', 'G', 'G#', 'A', 'Bb', 'B']
-# Notes to convert
+# If alternate notes, transpose
 enharmonic_map = {'Db': 'C#', 'D#': 'Eb', 'Gb': 'F#', 'Ab': 'G#', 'A#': 'Bb'}
 
 # Function to convert chord number to chord name based on the key
 def number_to_chord(key, number):
     # Define major scale chords for each number in a major key
-    major_scale_chords = {
-        1: '', 2: 'm', 3: 'm', 4: '', 5: '', 6: 'm', 7: 'dim'
-    }
-    
-    # Define the chromatic scale starting from C
-    chromatic_scale = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B']
+    major_scale_chords = {1: '', 2: 'm', 3: 'm', 4: '', 5: '', 6: 'm', 7: 'dim'}
     
     # Find the index of the key
     key_index = chromatic_scale.index(key)
@@ -37,12 +32,12 @@ def transpose_chord(chord, steps=0):
     root, suffix = get_normalised_chord(chord)
     
     # Find the transposed index
-    index = (chromatic_scale.index(root) + steps) % 12
+    index = (chromatic_scale.index(root) + steps) % len(chromatic_scale)
     
     # Return the transposed chord with the suffix
     return chromatic_scale[index] + suffix
 
-def key_to_steps(original_key, target_key):
+def get_transpose_steps(original_key, target_key):
     
     # Get root note and suffix (e.g., minor) for original and target keys
     original_root, original_suffix = get_normalised_chord(original_key)
@@ -53,27 +48,20 @@ def key_to_steps(original_key, target_key):
     target_index = chromatic_scale.index(target_root)
 
     # Calculate steps required to transpose
-    steps = (target_index - original_index) % 12
+    steps = (target_index - original_index) % len(chromatic_scale)
 
     # adjust the suffix accordingly to reflect relative major/minor movement
     if original_suffix == 'm' and target_suffix == '':
-        steps = (steps - 3) % 12
+        steps = (steps - 3) % len(chromatic_scale)
     elif original_suffix == '' and target_suffix == 'm':
-        steps = (steps + 3) % 12
+        steps = (steps + 3) % len(chromatic_scale)
     return steps
-
-# Test cases
-print(key_to_steps('Am', 'Bb'))  # Expected: correct relative step count
-print(key_to_steps('C', 'Am'))   # Expected: 9 steps down (relative major to minor)
-print(key_to_steps('G#', 'F#m')) # Expected: 1 step (enharmonic equivalent)
-print(key_to_steps('Db', 'F#'))  # Expected: 5 steps
-
 
 # Updated parse function to use both steps and key
 def parse_chordpro_to_lyrics_with_chords(lines, transpose_steps=0, target_key=None, original_key=None):
     # Determine the number of steps if keys are specified
     if target_key and original_key:
-        transpose_steps = key_to_steps(original_key, target_key)
+        transpose_steps = get_transpose_steps(original_key, target_key)
     
     output_sections = []
 
@@ -90,9 +78,9 @@ def parse_chordpro_to_lyrics_with_chords(lines, transpose_steps=0, target_key=No
             # If chord is specified as a number, convert to chord name
             if chord.isdigit():
                 chord = number_to_chord(target_key or original_key, int(chord))
+            else:
+                chord = transpose_chord(chord, transpose_steps)  # Transpose if needed
 
-            # Transpose the chord if needed
-            chord = transpose_chord(chord, transpose_steps)  # Transpose if needed
             chord_start = match.start() - current_pos  # Find the position to align with lyrics
             
             # Add a space if chords are next to each other to prevent them from colliding
