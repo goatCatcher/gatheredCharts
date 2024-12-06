@@ -1,0 +1,89 @@
+[tool.poetry]
+name = "gathered_charts"
+version = "0.0.0"
+description = "Chord charts for Gathered"
+authors = ["Toby Burgess <toby.burgess3800@gmail.com>", "Tim Farnworth <tkfarnworth@gmail.com>"]
+readme = "README.md"
+packages = [{include = "gathered_charts", from = "src"}]
+
+[tool.poetry.dependencies]
+python = ">=3.9, <3.12"
+weasyprint = "^63.0"
+
+
+[tool.poetry.group.dev.dependencies]
+pytest = "^7.3.1"
+pre-commit = "^3.2.2"
+pytest-cov = "^4.0.0"
+pytest-order = "^1.1.0"
+pylint = "^3.3.1"
+mypy = "^1.12.0"
+ruff = "^0.7.2"
+
+[tool.poetry.scripts]
+ole_comparison = "src.ole_validation.cli.ole_comparison.py:run"
+
+[tool.poe.tasks]
+exe = "poetry run python utils/auto_gen_exe.py"
+
+[tool.pylint.MASTER]
+ignore-patterns="test_.*?py"
+
+[tool.pylint.'MESSAGES CONTROL']
+variable-rgx = '(?:[a-z][A-Z][A-Z][a-z]|[a-z_][a-z0-9_]{1,30})'
+argument-rgx = '[a-z]|(?:[a-z][A-Z][A-Z][a-z]|[a-z_][a-z0-9_]{1,30})'
+max-statements = 100
+disable = """
+duplicate-code,
+fixme,
+invalid-name,
+line-too-long,
+missing-class-docstring,
+missing-function-docstring,
+missing-module-docstring,
+no-member,
+too-few-public-methods,
+too-many-arguments,
+too-many-branches,
+too-many-instance-attributes,
+too-many-lines,
+too-many-locals,
+too-many-nested-blocks,
+too-many-public-methods,
+"""
+good-names = 'i, j, k, x, y, z, _, q1, q3'
+
+[tool.isort]
+profile = "black"
+
+[tool.mypy]
+check_untyped_defs = true
+disallow_any_generics = false
+disallow_incomplete_defs = true
+disallow_subclassing_any = false
+disallow_untyped_calls = true
+disallow_untyped_decorators = false
+disallow_untyped_defs = true
+ignore_missing_imports = true
+no_implicit_optional = true
+warn_redundant_casts = true
+warn_return_any = false
+warn_unreachable = true
+warn_unused_configs = true
+warn_unused_ignores = false
+
+
+[tool.poetry-dynamic-versioning]
+enable = true
+
+[tool.ruff]
+lint.ignore = ["E501"]
+lint.extend-select = ["F841", "I"]
+
+[tool.poetry-dynamic-versioning.substitution]
+files = ["*/gathered_charts/__init__.py"]
+patterns = ["(__version__\\s*(?::.*?)?=\\s*['\"])[^'\"]*(['\"])"]
+
+[build-system]
+requires = ["poetry-core>=1.0.0", "poetry-dynamic-versioning"]
+build-backend = "poetry_dynamic_versioning.backend"
