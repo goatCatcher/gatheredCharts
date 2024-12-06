@@ -60,6 +60,3 @@ After compiling the HTML, the next step is to generate a **PDF**.
 - **Future Scalability**: The JSON structure and HTML generation functions should be designed to allow easy extension. For example, adding new metadata fields (e.g., tempo, genre) or new section types should not require major code changes.
 
 - **Convert from UG**: Specify an UG url, scrape the song and convert into JSON format
-
-
-

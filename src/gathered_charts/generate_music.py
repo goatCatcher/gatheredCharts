@@ -1,51 +1,64 @@
 import re
+from typing import Any, Dict, List, Tuple
 
-def handle_metadata(lines):
+from gathered_charts.transpose import transpose_chord
+
+
+def handle_metadata(lines: List[str]) -> None:
     output_sections = []
     for line in lines:
         if line.startswith("{title:"):
-            title = line[len("{title:"):-1].strip()
+            title = line[len("{title:") : -1].strip()
             output_sections.append(f"<h1>{title}</h1>")
             print(output_sections)
             continue
-        elif line.startswith("{key:"):
-            key = line[len("{key:"):-1].strip()
+        if line.startswith("{key:"):
+            key = line[len("{key:") : -1].strip()
             output_sections.append(f"<div class='metadata'>Key: {key}</div>")
-            print(output_sections)            
+            print(output_sections)
             continue
-        elif line.startswith("{start_of_"):
-            section_name = line[len("{start_of_"):-1].strip().replace("_", " ").capitalize()
+        if line.startswith("{start_of_"):
+            section_name = (
+                line[len("{start_of_") : -1].strip().replace("_", " ").capitalize()
+            )
             output_sections.append(f"<h2>{section_name}</h2>")
-            print(output_sections)            
+            print(output_sections)
             continue
-        elif line.startswith("{end_of_"):
+        if line.startswith("{end_of_"):
             output_sections.append("<hr/>")  # Add an optional divider after sections
-            print(output_sections)            
+            print(output_sections)
             continue
 
-import re
 
-def parse_chordpro_to_lyrics_with_chords(lines, transpose_steps=0):
+def parse_chordpro_to_lyrics_with_chords(
+    lines: List[str], transpose_steps: int = 0
+) -> str:
     output_sections = []
 
     for line in lines:
         # Parse the line to extract chords
         # The regex is updated to match any content inside the brackets
-        lyrics = re.sub(r'\[([^\]]+)\]', '', line).strip()  # Remove the chords, leaving only lyrics
-        chords = []
+        lyrics = re.sub(
+            r"\[([^\]]+)\]", "", line
+        ).strip()  # Remove the chords, leaving only lyrics
+        chords: List[Tuple[str, int]] = []
 
         current_pos = 0
-        for match in re.finditer(r'\[([^\]]+)\]', line):
+        for match in re.finditer(r"\[([^\]]+)\]", line):
             chord = match.group(1)
             chord = transpose_chord(chord, transpose_steps)  # Transpose if needed
-            chord_start = match.start() - current_pos  # Find the position to align with lyrics
-            
+            chord_start = (
+                match.start() - current_pos
+            )  # Find the position to align with lyrics
+
             # Add a space if chords are next to each other to prevent them from colliding
             if chords and chord_start == chords[-1][1] + len(chords[-1][0]):
                 chord_start += 1  # Add a space between chords
-            
+
             chords.append((chord, chord_start))
-            current_pos += len(chord) + 2  # Update current position (including the brackets)
+            current_pos += (
+                len(chord) + 2
+            )  # Update current position (including the brackets)
 
         # Skip lines that have no lyrics and no chords
         if not lyrics and not chords:
@@ -59,7 +72,11 @@ def parse_chordpro_to_lyrics_with_chords(lines, transpose_steps=0):
 
         # Generate chord line and lyrics line for HTML
         chord_line = ""
-        lyrics_line = " " * chords[-1][1] + lyrics if chords and chords[-1][1] > 0 and lyrics else lyrics
+        lyrics_line = (
+            " " * chords[-1][1] + lyrics
+            if chords and chords[-1][1] > 0 and lyrics
+            else lyrics
+        )
         last_pos = 0
         for chord, position in chords:
             chord_line += " " * (position - last_pos) + chord
@@ -73,15 +90,14 @@ def parse_chordpro_to_lyrics_with_chords(lines, transpose_steps=0):
             print(lyrics_line)
             output_sections.append(f"<pre class='lyrics-line'>{lyrics_line}</pre>")
 
-    # return "\n".join(output_sections)
-
-# Example usage
-parse_chordpro_to_lyrics_with_chords(lines=["[Bbm][Amaj7]This is a [G]chord"])
+    return "\n".join(output_sections)
 
 
-def generate_full_html(chordpro_lines, transpose_steps=0):
+def generate_full_html(chordpro_lines: List[str], transpose_steps: int = 0) -> str:
     # Generate song content in HTML format
-    song_content_html = parse_chordpro_to_lyrics_with_chords(chordpro_lines, transpose_steps)
+    song_content_html = parse_chordpro_to_lyrics_with_chords(
+        chordpro_lines, transpose_steps
+    )
 
     # Full HTML structure including headers, style, and song content
     html = f"""
@@ -134,64 +150,10 @@ def generate_full_html(chordpro_lines, transpose_steps=0):
     """
     return html
 
-# Example ChordPro lines
-chordpro_lines = [
-    "{title: Swing Low Sweet Chariot}",
-    "{key: D}",
-    "{start_of_chorus}",
-    "Swing [D]low, sweet [G]chari[D]ot,",
-    "Comin’ for to carry me [A7]home.",
-    "Swing [D7]low, sweet [G]chari[D]ot,",
-    "Comin’ for to [A7]carry me [D]home.",
-    "{end_of_chorus}",
-    "{start_of_chorus}",
-    "I [D]looked over Jordan, and [G]what did I [D]see,",
-    "Comin’ for to carry me [A7]home.",
-    "A [D]band of angels [G]comin’ after [D]me,",
-    "Comin’ for to [A7]carry me [D]home."
-    "{end_of_chorus}",
-]
 
-line = "Swing [D]low, sweet [G]chari[D]ot"
-chrd = "      D          G    D"
-line = "Swing low, sweet chariot"
-
-lyrics = re.sub(r'\[([A-G][#b]?[^\]]*)\]', '', line).strip()  # Remove the chords, leaving only lyrics
-print(lyrics)
-chords = []
-
-transpose_steps = 0
-current_pos = 0
-match = re.finditer(r'\[([A-G][#b]?[^\]]*)\]', line)
-for match in re.finditer(r'\[([A-G][#b]?[^\]]*)\]', line):
-    chord = match.group(1)
-    chord = transpose_chord(chord, transpose_steps)  # Transpose if needed
-    chord_start = match.start() - current_pos  # Find the position to align with lyrics
-    print(chord, chord_start)    
-    chords.append((chord, chord_start))
-    print(chords)
-    current_pos += len(chord) + 2  # Update current position (including the brackets)
-
-# Generate chord line and lyrics line for HTML
-chord_line = ""
-last_pos = 0
-for chord, position in chords:
-    chord_line += "&nbsp;" * (position - last_pos) + f"<span class='chord'>{chord}</span>"
-    last_pos = position + len(chord)
-
-song_content_html = parse_chordpro_to_lyrics_with_chords(chordpro_lines, transpose_steps=0)
-
-# Generate full HTML
-html_output = generate_full_html(chordpro_lines, transpose_steps=2)
-
-# Save HTML output
-with open("song.html", "w") as file:
-    file.write(html_output)
-
-
-import markdown
-
-def generate_song_html(title, key, lead, sections):
+def generate_song_html(
+    title: str, key: str, lead: str, sections: List[Dict[str, Any]]
+) -> str:
     html = f"""
     <!DOCTYPE html>
     <html>
@@ -258,20 +220,20 @@ def generate_song_html(title, key, lead, sections):
         </div>
         <div class="song-container">
     """
-    
+
     # Iterate over each section and add the content
     for section in sections:
         html += f"""
         <div class="song-section">
             <h2>{section['name'].capitalize()}</h2>
         """
-        
-        for chord_line, lyrics_line in section['lines']:
+
+        for chord_line, lyrics_line in section["lines"]:
             html += f"""
                 <div class="chords-line">{chord_line}</div>
                 <div class="lyrics-line">{lyrics_line}</div>
             """
-        
+
         html += """
         </div>
         """
@@ -282,14 +244,3 @@ def generate_song_html(title, key, lead, sections):
     </html>
     """
     return html
-
-
-
-from weasyprint import HTML
-
-HTML('song.html').write_pdf('song.pdf')
-
-
-
-
-
